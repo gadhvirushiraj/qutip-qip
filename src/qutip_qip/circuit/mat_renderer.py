@@ -17,13 +17,14 @@ from matplotlib.patches import (
 from ..operations import Gate, Measurement
 from ..circuit import QubitCircuit
 from .color_theme import default_theme
+from .base_renderer import BaseRenderer
 
 __all__ = [
     "MatRenderer",
 ]
 
 
-class MatRenderer:
+class MatRenderer(BaseRenderer):
     """
     Class to render a quantum circuit using matplotlib.
 
@@ -43,6 +44,7 @@ class MatRenderer:
         style: dict = None,
     ) -> None:
 
+        super().__init__()
         self.qc = qc
         self.ax = ax
         self.qwires = qc.N
@@ -107,28 +109,6 @@ class MatRenderer:
 
         self.canvas_plot()
 
-    def _get_xskip(self, wire_list: List[int], layer: int) -> float:
-        """
-        Get the xskip (horizontal value for getting to requested layer) for the gate to be plotted.
-
-        Parameters
-        ----------
-        wire_list : list
-            The list of wires the gate is acting on (control and target).
-
-        layer : int
-            The layer the gate is acting on.
-        """
-
-        xskip = []
-        if self.align_layer:
-            wire_list = list(range(self.qwires))
-
-        for wire in wire_list:
-            xskip.append(sum(self.layer_list[wire][:layer]))
-
-        return max(xskip)
-
     def _get_text_width(
         self,
         text: str,
@@ -181,46 +161,6 @@ class MatRenderer:
         text_obj.remove()
 
         return bbox_data.width * 2.54 * 3
-
-    def _manage_layers(
-        self,
-        gate_width: float,
-        wire_list: List[int],
-        layer: int,
-        xskip: float = 0,
-    ) -> None:
-        """
-        Manages and updates the layer widths according to the gate's width just plotted.
-
-        Parameters
-        ----------
-        gate_width : float
-            The width of the gate to be plotted.
-
-        wire_list : list
-            The list of wires the gate is acting on (control and target).
-
-        layer : int
-            The layer the gate is acting on.
-
-        xskip : float, optional
-            The horizontal value for getting to requested layer. The default is 0.
-        """
-
-        for wire in wire_list:
-            if len(self.layer_list[wire]) > layer:
-                if (
-                    self.layer_list[wire][layer]
-                    < gate_width + self.gate_margin * 2
-                ):
-                    self.layer_list[wire][layer] = (
-                        gate_width + self.gate_margin * 2
-                    )
-            else:
-                temp = xskip - sum(self.layer_list[wire]) if xskip != 0 else 0
-                self.layer_list[wire].append(
-                    temp + gate_width + self.gate_margin * 2
-                )
 
     def _add_wire(self) -> None:
         """
